@@ -2,4 +2,7 @@
   <string name="app_name">AwesomeProject</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="facebook_app_id">272492172375124</string>
+  <string name="facebook_client_token">e88b6706079b0a27e04ef5049c469d3a</string>
+  <string name="fb_login_protocol_scheme">fb272492172375124</string>
 </resources>

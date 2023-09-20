@@ -16,6 +16,12 @@ import BillingScreen from './src/screens/BillingScreen';
 import Home from './src/screens/home';
 import SignIn from './src/components/sign_in/SignIn';
 import SignUp from './src/components/sign_up/SignUp';
+import UserProfileEdit from './src/components/usrer_profile/UserProfileEdit';
+import AppColors from './src/contsants/AppColors';
+import { FONT_REGULAR } from './src/constants';
+import AuthStack from './src/navigation/AuthStack';
+import { AuthProvider } from './src/context/AuthContext';
+import { AppNav } from './src/context/AppNav';
 
 
 
@@ -39,19 +45,16 @@ export default function App() {
   }
 
   return (
-   <PaperProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{
-          headerShown: false}}>
-         
-            <Stack.Screen name="SignIn" component={SignIn} />
-            <Stack.Screen name="Home" component={Home} />
-          <Stack.Screen name="BillingScreen" component={BillingScreen} />
-          <Stack.Screen name="SignUp" component={SignUp} />
-          
+    <PaperProvider>
 
-        </Stack.Navigator>
-      </NavigationContainer>
+      <AuthProvider>
+    
+
+          <AppNav />
+      
+      </AuthProvider>
+
+
     </PaperProvider>
   );
 }

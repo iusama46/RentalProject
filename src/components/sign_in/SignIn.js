@@ -1,4 +1,4 @@
-import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View, Platform } from 'react-native'
+import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View, Platform, ScrollView } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { FONT_BOLD, FONT_REGULAR } from '../../constants'
 import AppColors from '../../contsants/AppColors'
@@ -10,27 +10,17 @@ import * as AuthSession from 'expo-auth-session';
 import * as Google from "expo-auth-session/providers/google";
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import * as WebBrowser from "expo-web-browser";
+import { LoginManager, Profile } from "react-native-fbsdk-next";
 
 import {
     GoogleSignin,
     GoogleSigninButton,
     statusCodes,
 } from '@react-native-google-signin/google-signin';
+import { ActivityIndicator } from 'react-native-paper'
+import useFetch from './useFetch'
 
-GoogleSignin.configure({
-    scopes: ['https://www.googleapis.com/auth/drive.readonly'], // what API you want to access on behalf of the user, default is email and profile
-    webClientId: '535196208474-f6vdgf0c9glhtgddl79p6fjujfleup1o.apps.googleusercontent.com', // client ID of type WEB for your server (needed to verify user ID and offline access)
-    offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
-    hostedDomain: '', // specifies a hosted domain restriction
-    forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
-    accountName: '', // [Android] specifies an account name on the device that should be used
-    iosClientId: '<FROM DEVELOPER CONSOLE>', // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
-    googleServicePlistPath: '', // [iOS] if you renamed your GoogleService-Info file, new name here, e.g. GoogleService-Info-Staging
-    openIdRealm: '', // [iOS] The OpenID2 realm of the home web server. This allows Google to include the user's OpenID Identifier in the OpenID Connect ID token.
-    profileImageSize: 120, // [iOS] The desired height (and width) of the profile image. Defaults to 120px,
-    androidClientId: '535196208474-klqpos8rjjq1bshc1ro72vs9cqprvrsi.apps.googleusercontent.com'
-});
-
+Helper.configureGoogle();
 
 var primaryColor = AppColors.primaryColor;
 var fontBold = FONT_BOLD;
@@ -42,17 +32,77 @@ export default function SignIn() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(true);
+    const [isError, setIsError] = useState(false);
+    const [errorTxt, setErrorTxt] = useState('');
+
+    const [isLoading, setIsLoading] = useState(false);
+
+    const {data} = useFetch()
+
+    SignInFB = async () => {
+        var isError = false;
+        var isLoggedIn = false;
+        var userData = ''
+        LoginManager.logInWithPermissions(["public_profile"]).then(
+            function (result) {
+                if (result.isCancelled) {
+                    console.log("Login cancelled");
+                    isLoggedIn = false;
+                } else {
+                    console.log(
+                        "Login success with permissions: " +
+                        result.grantedPermissions.toString()
+                    );
+
+                    const currentProfile = Profile.getCurrentProfile().then(
+                        async function (currentProfile) {
+                            if (currentProfile) {
+                                console.log("The current logged user is: " +
+                                    currentProfile.name
+                                    + ". His profile id is: " +
+                                    currentProfile.userID
+                                );
+
+                                //storeData(currentProfile);
+                                try {
+                                    const jsonValue = JSON.stringify(currentProfile);
+                                    await AsyncStorage.setItem('userData', jsonValue);
+
+                                    isLoggedIn = true;
+                                    isError = false;
+                                    userData = currentProfile;
+
+
+                                } catch (e) {
+                                    // saving error
+                                    console.log(e);
+                                    isError = true;
+                                    isLoggedIn = false;
+                                }
 
 
 
+                            }
+                            return { userData, isLoggedIn, isError };
+                        }
+                    );
+
+                }
+            },
+            function (error) {
+                console.log("Login fail with error: " + error);
+            }
 
 
+        );
+        console.log('kkpp');
+
+    }
 
 
     return (
-        <View style={{ backgroundColor: '#ffff', flex: 1 }}>
 
-
+        <ScrollView style={{ backgroundColor: '#ffff', flex: 1 }}>
             <View style={{ alignItems: 'center', marginTop: '30%', marginHorizontal: 24 }}>
 
                 <Text style={styles.loginTxt}>Login here</Text>
@@ -89,42 +139,67 @@ export default function SignIn() {
                     <Pressable
                         onPress={async () => {
                             setShowPassword(!showPassword);
+                            navigation.navigate('UserProfileEdit');
                         }}  >
                         <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={24} style={{}} ></Ionicons>
                     </Pressable>
 
                 </View>
 
+                {
+                    isError ? <Text style={styles.errorTxt}>{errorTxt}</Text>
+                        : <View />
+                }
 
                 <Text style={styles.forgotTxt}>
                     Forgot your password?
                 </Text>
                 <Pressable style={{ width: '90%' }}
-                    onPress={() => {
-
-                        if (Helper.isFieldEmpty(email)) {
-
-                            Helper.showAlert('Email is Required')
-
-                        } else {
-                            if (Helper.isEmailValid(email)) {
-
-                                if (Helper.isFieldEmpty(password)) {
-                                    Helper.showAlert('Password is required')
-                                } else {
-                                    ///Post data
-                                    navigation.replace('Home');
-                                }
+                    onPress={async () => {
+                        setIsError(false);
+                        console.log('sign in');
+                        console.log(data);
+                        Helper.isLogin(email, password);
+                        if (!isLoading) {
+                            if (Helper.isFieldEmpty(email)) {
+                                //Helper.showAlert('Email is Required')
+                                showError('Email is Required');
                             } else {
-                                Helper.showAlert('Enter a valid email addess')
+                                if (Helper.isEmailValid(email)) {
+
+                                    if (Helper.isFieldEmpty(password)) {
+
+                                        showError('Password is Required');
+                                    } else {
+                                        ///Post data
+                                        // navigation.replace('Home');
+                                        //setIsLoading(true);
+                                        setIsLoading(true);
+
+                                        setTimeout(() => {
+                                            var data = Helper.isLogin(email, password);
+                                            console.log(data.authorizationToken);
+                                            setIsLoading(false);
+                                            navigation.replace('Home');
+                                        }, 3000);
+
+                                        console.log('result:')
+                                    }
+                                } else {
+                                    showError('Enter a valid email addess');
+                                }
                             }
                         }
 
                     }}>
-                    <View style={{ height: 44, width: '100%', backgroundColor: primaryColor, borderRadius: 6 }}>
-                        <Text style={{ fontFamily: FONT_BOLD, fontSize: 20, fontWeight: 600, color: '#ffff', alignSelf: 'center', bottom: -4 }}>
-                            Sign in
-                        </Text>
+                    <View style={{ height: 44, width: '100%', backgroundColor: primaryColor, borderRadius: 6, justifyContent: 'center' }}>
+                        {
+                            isLoading ? <ActivityIndicator color='#ffff' style={{ alignSelf: 'center' }}></ActivityIndicator> :
+                                <Text style={{ fontFamily: FONT_BOLD, fontSize: 20, fontWeight: 600, color: '#ffff', alignSelf: 'center', bottom: 2 }}>
+                                    Sign in
+                                </Text>
+                        }
+
                     </View>
                 </Pressable>
 
@@ -156,8 +231,18 @@ export default function SignIn() {
 
                     </View>
 
+
+
                     <View style={styles.appleIcon}>
-                        <Image source={Images.facebook} style={styles.icon}></Image>
+                        <Pressable onPress={async () => {
+                            console.log('fb auth');
+                            // Helper.SignInFacebook();
+                            SignInFB();
+
+                        }}>
+                            <Image source={Images.facebook} style={styles.icon}></Image>
+                        </Pressable>
+
                     </View>
 
                     {
@@ -168,9 +253,23 @@ export default function SignIn() {
 
                 </View>
 
+
             </View>
-        </View>
+        </ScrollView>
     )
+
+
+
+    function showError(errorMsg) {
+        setErrorTxt(errorMsg);
+        setIsError(true);
+    }
+
+    function hideError() {
+        setIsError(false);
+    }
+
+
 }
 
 const styles = StyleSheet.create({
@@ -218,6 +317,20 @@ const styles = StyleSheet.create({
         width: '90%',
         borderRadius: 6
     },
+
+    errorTxt: {
+        fontFamily: regularFont,
+        fontSize: 14,
+        bottom: 0,
+        fontWeight: '600',
+        color: '#ff0000',
+        marginHorizontal: 4,
+        padding: 2,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '90%',
+        borderRadius: 6
+    },
     forgotTxt: {
         marginTop: 16,
         marginBottom: 20,
@@ -231,6 +344,7 @@ const styles = StyleSheet.create({
     },
     continueTxt: {
         marginTop: '30%',
+
         fontFamily: regularFont,
         fontSize: 13,
         bottom: 10,

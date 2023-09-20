@@ -13,7 +13,26 @@
     },
     "scheme": "com.gwm.rental",
     "plugins": [
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "272492172375124",
+          "clientToken": "f3c67063d622fe747f669e3858ec448b",
+          "displayName": "RN SDK Demo",
+          "scheme": "fb272492172375124",
+          "advertiserIDCollectionEnabled": false,
+          "autoLogAppEventsEnabled": false,
+          "isAutoInitEnabled": true,
+          "iosUserTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ]
     ],
     "assetBundlePatterns": [
       "**/*"
@@ -21,7 +40,17 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.gwm.rental",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          }
+        ]
+      }
     },
     "android": {
       "package": "com.gwm.rental",
@@ -30,10 +59,18 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff",
         "googleServicesFile": "./google-services.json"
-      }
+      },
+      "permissions": [
+        "android.permission.INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8f048289-3e40-42c9-ae5a-7e6bab760a82"
+      }
     }
   }
 }

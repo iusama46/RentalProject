@@ -20,6 +20,7 @@ const Images = {
     facebook: require('../../assets/images/fb.png'),
     apple: require('../../assets/images/apple.png'),
     google: require('../../assets/images/google.png'),
+    userProfilePlaceHolder: require('../../assets/images/user_placeholder.png'),
 
 
 };
